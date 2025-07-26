@@ -76,7 +76,7 @@ export function TransactionProvider({ children }: { children: React.ReactNode })
   const updateTransaction = async (id: string, transaction: Partial<Transaction>) => {
     try {
       const docRef = doc(db, "transactions", id)
-      const updateData: any = { ...transaction }
+      const updateData: Partial<Transaction> = { ...transaction }
       if (transaction.date) {
         updateData.date = transaction.date
       }
