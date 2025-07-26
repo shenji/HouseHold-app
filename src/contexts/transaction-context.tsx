@@ -63,7 +63,7 @@ export function StudyProvider({ children }: { children: React.ReactNode }) {
       console.error("Error adding study session:", error);
       console.error("Error details:", {
         message: error instanceof Error ? error.message : "Unknown error",
-        code: (error as any)?.code,
+        code: error && typeof error === 'object' && 'code' in error ? (error as { code?: string }).code : undefined,
         stack: error instanceof Error ? error.stack : undefined
       });
       throw error;
