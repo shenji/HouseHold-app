@@ -53,13 +53,20 @@ export function StudyProvider({ children }: { children: React.ReactNode }) {
   // Firestoreに新しい勉強セッションを追加
   const addStudySession = async (studySession: Omit<StudySession, "id">) => {
     try {
-      await addDoc(collection(db, "studySessions"), {
+      console.log("Adding study session:", studySession);
+      const docRef = await addDoc(collection(db, "studySessions"), {
         ...studySession,
         date: studySession.date // FirestoreはDate型を自動的にTimestampに変換
-      })
+      });
+      console.log("Study session added successfully with ID:", docRef.id);
     } catch (error) {
-      console.error("Error adding study session:", error)
-      throw error
+      console.error("Error adding study session:", error);
+      console.error("Error details:", {
+        message: error instanceof Error ? error.message : "Unknown error",
+        code: (error as any)?.code,
+        stack: error instanceof Error ? error.stack : undefined
+      });
+      throw error;
     }
   }
 

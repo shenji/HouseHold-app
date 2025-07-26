@@ -14,6 +14,16 @@ const firebaseConfig = {
   appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID,
 };
 
+// Debug: Check if environment variables are loaded
+console.log("Firebase Config:", {
+  apiKey: firebaseConfig.apiKey ? "Set" : "Not set",
+  authDomain: firebaseConfig.authDomain ? "Set" : "Not set",
+  projectId: firebaseConfig.projectId ? "Set" : "Not set",
+  storageBucket: firebaseConfig.storageBucket ? "Set" : "Not set",
+  messagingSenderId: firebaseConfig.messagingSenderId ? "Set" : "Not set",
+  appId: firebaseConfig.appId ? "Set" : "Not set",
+});
+
 // Initialize Firebase
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
