@@ -8,6 +8,7 @@ interface HeaderProps {
 }
 
 export function Header({ onMenuClick }: HeaderProps) {
+
   return (
     <header className="h-16 flex items-center justify-between px-4 md:px-8 bg-blue-600 text-white shadow-md shrink-0">
       <div className="flex items-center gap-4">

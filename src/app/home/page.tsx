@@ -18,7 +18,6 @@ export default function StudyHomePage() {
       await addStudySession(data)
     } catch (error) {
       console.error("Failed to add study session:", error)
-      // ここでユーザーにエラーを通知する処理を追加できます
       alert("勉強時間の記録に失敗しました。")
     }
   }
