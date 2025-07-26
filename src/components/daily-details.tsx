@@ -6,7 +6,7 @@ import { useMemo, useState } from "react"
 import { PlusCircle } from "lucide-react"
 import { Button } from "@/src/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/src/components/ui/card"
-import { cn } from "@/src/lib/utils"
+
 import type { StudySession } from "@/src/lib/types"
 import { StudySessionModal } from "./transaction-modal"
 import { getSubjectIcon } from "@/src/lib/icons"

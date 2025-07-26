@@ -12,7 +12,6 @@ import { Button } from "@/src/components/ui/button"
 import { Calendar } from "@/src/components/ui/calendar"
 import { Popover, PopoverContent, PopoverTrigger } from "@/src/components/ui/popover"
 import { ReportCharts } from "@/src/components/report-charts"
-import { cn } from "@/src/lib/utils"
 
 type Period = "day" | "week" | "month"
 type ChartType = "bar" | "pie"
@@ -47,8 +46,6 @@ export default function ReportPage() {
       }
       return isWithinInterval(s.date, { start: startDate, end: endDate })
     })
-
-    const totalStudyTime = relevantStudySessions.reduce((sum, s) => sum + s.studyMinutes, 0)
 
     const studyTimeByNickname = relevantStudySessions.reduce(
       (acc, s) => {
