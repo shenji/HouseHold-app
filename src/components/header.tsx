@@ -30,7 +30,7 @@ export function Header({ onMenuClick }: HeaderProps) {
           <span className="sr-only">サイドバーを切り替え</span>
         </Button>
 
-        <h1 className="text-xl font-semibold">家計簿アプリ</h1>
+        <h1 className="text-xl font-semibold">みんなの勉強時間レポート</h1>
       </div>
     </header>
   )

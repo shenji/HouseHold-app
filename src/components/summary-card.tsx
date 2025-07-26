@@ -15,11 +15,13 @@ const colorClasses = {
 }
 
 export function SummaryCard({ title, amount, icon: Icon, color }: SummaryCardProps) {
-  const formatCurrency = (value: number) => {
-    return new Intl.NumberFormat("ja-JP", {
-      style: "currency",
-      currency: "JPY",
-    }).format(value)
+  const formatTime = (minutes: number) => {
+    const hours = Math.floor(minutes / 60)
+    const mins = minutes % 60
+    if (hours > 0) {
+      return `${hours}時間${mins}分`
+    }
+    return `${mins}分`
   }
 
   return (
@@ -28,7 +30,7 @@ export function SummaryCard({ title, amount, icon: Icon, color }: SummaryCardPro
         <Icon className="h-6 w-6 mr-3" />
         <span className="font-semibold">{title}</span>
       </div>
-      <span className="text-xl font-bold">{formatCurrency(amount)}</span>
+      <span className="text-xl font-bold">{formatTime(amount)}</span>
     </div>
   )
 }

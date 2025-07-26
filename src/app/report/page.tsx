@@ -5,7 +5,8 @@ import { format, startOfWeek, endOfWeek, startOfMonth, endOfMonth, isWithinInter
 import { ja } from "date-fns/locale"
 import { CalendarIcon } from "lucide-react"
 
-import { useTransactions } from "@/src/contexts/transaction-context"
+import { useStudySessions } from "@/src/contexts/transaction-context"
+import type { StudySession } from "@/src/lib/types"
 import { Tabs, TabsList, TabsTrigger } from "@/src/components/ui/tabs"
 import { Button } from "@/src/components/ui/button"
 import { Calendar } from "@/src/components/ui/calendar"
@@ -17,7 +18,7 @@ type Period = "day" | "week" | "month"
 type ChartType = "bar" | "pie"
 
 export default function ReportPage() {
-  const { transactions } = useTransactions()
+  const { studySessions } = useStudySessions()
   const [period, setPeriod] = useState<Period>("month")
   const [date, setDate] = useState<Date>(new Date())
   const [chartType, setChartType] = useState<ChartType>("bar")
@@ -40,34 +41,28 @@ export default function ReportPage() {
         break
     }
 
-    const relevantTransactions = transactions.filter((t) => {
+    const relevantStudySessions: StudySession[] = studySessions.filter((s) => {
       if (period === "day") {
-        return isSameDay(t.date, startDate)
+        return isSameDay(s.date, startDate)
       }
-      return isWithinInterval(t.date, { start: startDate, end: endDate })
+      return isWithinInterval(s.date, { start: startDate, end: endDate })
     })
 
-    const income = relevantTransactions.filter((t) => t.type === "income").reduce((sum, t) => sum + t.amount, 0)
-    const expense = relevantTransactions.filter((t) => t.type === "expense").reduce((sum, t) => sum + t.amount, 0)
+    const totalStudyTime = relevantStudySessions.reduce((sum, s) => sum + s.studyMinutes, 0)
 
-    const expenseByCategory = relevantTransactions
-      .filter((t) => t.type === "expense")
-      .reduce(
-        (acc, t) => {
-          acc[t.category] = (acc[t.category] || 0) + t.amount
-          return acc
-        },
-        {} as Record<string, number>,
-      )
+    const studyTimeByNickname = relevantStudySessions.reduce(
+      (acc, s) => {
+        acc[s.nickname] = (acc[s.nickname] || 0) + s.studyMinutes
+        return acc
+      },
+      {} as Record<string, number>,
+    )
 
-    const pieChartData = Object.entries(expenseByCategory).map(([name, value]) => ({ name, value }))
-    const barChartData = [
-      { name: "収入", 金額: income },
-      { name: "支出", 金額: expense },
-    ]
+    const pieChartData = Object.entries(studyTimeByNickname).map(([name, value]) => ({ name, value }))
+    const barChartData = Object.entries(studyTimeByNickname).map(([name, value]) => ({ name, 時間: value }))
 
     return { barChartData, pieChartData }
-  }, [transactions, period, date])
+  }, [studySessions, period, date])
 
   const handleDateChange = (newDate: Date | undefined) => {
     if (newDate) {
@@ -77,43 +72,47 @@ export default function ReportPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-col sm:flex-row gap-4 justify-between items-center">
-        <Tabs value={period} onValueChange={(value) => setPeriod(value as Period)}>
-          <TabsList>
-            <TabsTrigger value="day">日</TabsTrigger>
-            <TabsTrigger value="week">週</TabsTrigger>
-            <TabsTrigger value="month">月</TabsTrigger>
-          </TabsList>
-        </Tabs>
-        <Popover>
-          <PopoverTrigger asChild>
-            <Button
-              variant={"outline"}
-              className={cn("w-[280px] justify-start text-left font-normal", !date && "text-muted-foreground")}
-            >
-              <CalendarIcon className="mr-2 h-4 w-4" />
-              {date ? format(date, "PPP", { locale: ja }) : <span>日付を選択</span>}
-            </Button>
-          </PopoverTrigger>
-          <PopoverContent className="w-auto p-0">
-            <Calendar mode="single" selected={date} onSelect={handleDateChange} initialFocus locale={ja} />
-          </PopoverContent>
-        </Popover>
+      <div className="flex items-center justify-between">
+        <h1 className="text-2xl font-bold">勉強時間レポート（ニックネーム別）</h1>
+        <div className="flex items-center gap-4">
+          <Popover>
+            <PopoverTrigger asChild>
+              <Button variant="outline" className="justify-start text-left font-normal">
+                <CalendarIcon className="mr-2 h-4 w-4" />
+                {format(date, "yyyy年M月d日", { locale: ja })}
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-auto p-0" align="end">
+              <Calendar
+                mode="single"
+                selected={date}
+                onSelect={handleDateChange}
+                initialFocus
+              />
+            </PopoverContent>
+          </Popover>
+        </div>
       </div>
 
-      <div className="space-y-4">
-        <Tabs value={chartType} onValueChange={(value) => setChartType(value as ChartType)}>
-          <TabsList>
-            <TabsTrigger value="bar">収入・支出グラフ</TabsTrigger>
-            <TabsTrigger value="pie">支出内訳グラフ</TabsTrigger>
-          </TabsList>
-        </Tabs>
+      <Tabs value={period} onValueChange={(value) => setPeriod(value as Period)}>
+        <TabsList>
+          <TabsTrigger value="day">日</TabsTrigger>
+          <TabsTrigger value="week">週</TabsTrigger>
+          <TabsTrigger value="month">月</TabsTrigger>
+        </TabsList>
+      </Tabs>
+
+      <Tabs value={chartType} onValueChange={(value) => setChartType(value as ChartType)}>
+        <TabsList>
+          <TabsTrigger value="bar">棒グラフ</TabsTrigger>
+          <TabsTrigger value="pie">円グラフ</TabsTrigger>
+        </TabsList>
         <ReportCharts
           chartType={chartType}
           barChartData={filteredData.barChartData}
           pieChartData={filteredData.pieChartData}
         />
-      </div>
+      </Tabs>
     </div>
   )
 }

@@ -1,5 +1,7 @@
 "use client"
 
+import type React from "react"
+
 import {
   BarChart,
   Bar,
@@ -17,22 +19,29 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/src/components/ui/ca
 
 interface ReportChartsProps {
   chartType: "bar" | "pie"
-  barChartData: { name: string; 金額: number }[]
+  barChartData: { name: string; 時間: number }[]
   pieChartData: { name: string; value: number }[]
 }
 
 const COLORS = ["#0088FE", "#00C49F", "#FFBB28", "#FF8042", "#8884d8", "#82ca9d"]
 
-export function ReportCharts({ chartType, barChartData, pieChartData }: ReportChartsProps) {
-  const formatCurrency = (value: number) => `¥${value.toLocaleString()}`
+export function ReportCharts({ chartType, barChartData, pieChartData }: ReportChartsProps): React.JSX.Element {
+  const formatTime = (minutes: number) => {
+    const hours = Math.floor(minutes / 60)
+    const mins = minutes % 60
+    if (hours > 0) {
+      return `${hours}時間${mins}分`
+    }
+    return `${mins}分`
+  }
 
-  const noBarData = barChartData.every((d) => d.金額 === 0)
+  const noBarData = barChartData.every((d) => d.時間 === 0)
   const noPieData = pieChartData.length === 0
 
   return (
     <Card>
       <CardHeader>
-        <CardTitle>{chartType === "bar" ? "収入と支出" : "支出の内訳"}</CardTitle>
+        <CardTitle>{chartType === "bar" ? "ニックネーム別勉強時間" : "ニックネーム別勉強時間の内訳"}</CardTitle>
       </CardHeader>
       <CardContent>
         {chartType === "bar" ? (
@@ -45,20 +54,16 @@ export function ReportCharts({ chartType, barChartData, pieChartData }: ReportCh
               <BarChart data={barChartData}>
                 <CartesianGrid strokeDasharray="3 3" />
                 <XAxis dataKey="name" />
-                <YAxis tickFormatter={formatCurrency} />
-                <Tooltip formatter={(value: number) => formatCurrency(value)} />
+                <YAxis tickFormatter={formatTime} />
+                <Tooltip formatter={(value: number) => formatTime(value)} />
                 <Legend />
-                <Bar dataKey="金額" name="金額">
-                  {barChartData.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={entry.name === "収入" ? "#3b82f6" : "#ef4444"} />
-                  ))}
-                </Bar>
+                <Bar dataKey="時間" name="勉強時間" fill="#3b82f6" />
               </BarChart>
             </ResponsiveContainer>
           )
         ) : noPieData ? (
           <div className="flex items-center justify-center h-[300px]">
-            <p className="text-gray-500">この期間の支出データはありません。</p>
+            <p className="text-gray-500">この期間の勉強データはありません。</p>
           </div>
         ) : (
           <ResponsiveContainer width="100%" height={300}>
@@ -77,7 +82,7 @@ export function ReportCharts({ chartType, barChartData, pieChartData }: ReportCh
                   <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                 ))}
               </Pie>
-              <Tooltip formatter={(value: number) => formatCurrency(value)} />
+              <Tooltip formatter={(value: number) => formatTime(value)} />
               <Legend />
             </PieChart>
           </ResponsiveContainer>

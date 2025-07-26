@@ -4,44 +4,45 @@ import type React from "react"
 import { createContext, useContext, useState, useEffect } from "react"
 import { collection, addDoc, onSnapshot, deleteDoc, doc, updateDoc } from "firebase/firestore"
 import { db } from "@/src/firebase"
-import type { Transaction } from "@/src/lib/types"
+import type { StudySession } from "@/src/lib/types"
 
-interface TransactionContextType {
-  transactions: Transaction[]
-  addTransaction: (transaction: Omit<Transaction, "id">) => Promise<void>
-  deleteTransaction: (id: string) => Promise<void>
-  updateTransaction: (id: string, transaction: Partial<Transaction>) => Promise<void>
+interface StudyContextType {
+  studySessions: StudySession[]
+  addStudySession: (studySession: Omit<StudySession, "id">) => Promise<void>
+  deleteStudySession: (id: string) => Promise<void>
+  updateStudySession: (id: string, studySession: Partial<StudySession>) => Promise<void>
   loading: boolean
 }
 
-const TransactionContext = createContext<TransactionContextType | undefined>(undefined)
+const StudyContext = createContext<StudyContextType | undefined>(undefined)
 
-export function TransactionProvider({ children }: { children: React.ReactNode }) {
-  const [transactions, setTransactions] = useState<Transaction[]>([])
+export function StudyProvider({ children }: { children: React.ReactNode }) {
+  const [studySessions, setStudySessions] = useState<StudySession[]>([])
   const [loading, setLoading] = useState(true)
 
   // Firestoreからリアルタイムでデータを取得
   useEffect(() => {
     const unsubscribe = onSnapshot(
-      collection(db, "transactions"),
+      collection(db, "studySessions"),
       (snapshot) => {
-        const transactionData: Transaction[] = []
+        const studySessionData: StudySession[] = []
         snapshot.forEach((doc) => {
           const data = doc.data()
-          transactionData.push({
+          studySessionData.push({
             id: doc.id,
             date: data.date.toDate(), // FirestoreのTimestampをDateに変換
             type: data.type,
-            category: data.category,
-            amount: data.amount,
+            subject: data.subject,
+            nickname: data.nickname,
+            studyMinutes: data.studyMinutes,
             memo: data.memo
           })
         })
-        setTransactions(transactionData)
+        setStudySessions(studySessionData)
         setLoading(false)
       },
       (error) => {
-        console.error("Error fetching transactions:", error)
+        console.error("Error fetching study sessions:", error)
         setLoading(false)
       }
     )
@@ -49,63 +50,58 @@ export function TransactionProvider({ children }: { children: React.ReactNode })
     return () => unsubscribe()
   }, [])
 
-  // Firestoreに新しいトランザクションを追加
-  const addTransaction = async (transaction: Omit<Transaction, "id">) => {
+  // Firestoreに新しい勉強セッションを追加
+  const addStudySession = async (studySession: Omit<StudySession, "id">) => {
     try {
-      await addDoc(collection(db, "transactions"), {
-        ...transaction,
-        date: transaction.date // FirestoreはDate型を自動的にTimestampに変換
+      await addDoc(collection(db, "studySessions"), {
+        ...studySession,
+        date: studySession.date // FirestoreはDate型を自動的にTimestampに変換
       })
     } catch (error) {
-      console.error("Error adding transaction:", error)
+      console.error("Error adding study session:", error)
       throw error
     }
   }
 
-  // Firestoreからトランザクションを削除
-  const deleteTransaction = async (id: string) => {
+  // Firestoreから勉強セッションを削除
+  const deleteStudySession = async (id: string) => {
     try {
-      await deleteDoc(doc(db, "transactions", id))
+      await deleteDoc(doc(db, "studySessions", id))
     } catch (error) {
-      console.error("Error deleting transaction:", error)
+      console.error("Error deleting study session:", error)
       throw error
     }
   }
 
-  // Firestoreのトランザクションを更新
-  const updateTransaction = async (id: string, transaction: Partial<Transaction>) => {
+  // Firestoreの勉強セッションを更新
+  const updateStudySession = async (id: string, studySession: Partial<StudySession>) => {
     try {
-      const docRef = doc(db, "transactions", id)
-      const updateData: Partial<Transaction> = { ...transaction }
-      if (transaction.date) {
-        updateData.date = transaction.date
-      }
-      await updateDoc(docRef, updateData)
+      await updateDoc(doc(db, "studySessions", id), studySession)
     } catch (error) {
-      console.error("Error updating transaction:", error)
+      console.error("Error updating study session:", error)
       throw error
     }
   }
 
   return (
-    <TransactionContext.Provider 
-      value={{ 
-        transactions, 
-        addTransaction, 
-        deleteTransaction, 
-        updateTransaction,
-        loading 
+    <StudyContext.Provider
+      value={{
+        studySessions,
+        addStudySession,
+        deleteStudySession,
+        updateStudySession,
+        loading,
       }}
     >
       {children}
-    </TransactionContext.Provider>
+    </StudyContext.Provider>
   )
 }
 
-export function useTransactions() {
-  const context = useContext(TransactionContext)
-  if (!context) {
-    throw new Error("useTransactions must be used within a TransactionProvider")
+export function useStudySessions() {
+  const context = useContext(StudyContext)
+  if (context === undefined) {
+    throw new Error("useStudySessions must be used within a StudyProvider")
   }
   return context
 }

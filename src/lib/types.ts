@@ -1,8 +1,9 @@
-export type Transaction = {
+export type StudySession = {
   id: string
   date: Date
-  type: "income" | "expense"
-  category: string
-  amount: number
+  type: "study"
+  subject: string
+  nickname: string
+  studyMinutes: number
   memo?: string
 }

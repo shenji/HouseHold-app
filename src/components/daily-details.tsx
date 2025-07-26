@@ -1,80 +1,52 @@
 "use client"
 
+import type React from "react"
 import { format, isSameDay } from "date-fns"
 import { useMemo, useState } from "react"
 import { PlusCircle } from "lucide-react"
 import { Button } from "@/src/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/src/components/ui/card"
 import { cn } from "@/src/lib/utils"
-import type { Transaction } from "@/src/lib/types"
-import { TransactionModal } from "./transaction-modal"
-import { getCategoryIcon } from "@/src/lib/icons"
+import type { StudySession } from "@/src/lib/types"
+import { StudySessionModal } from "./transaction-modal"
+import { getSubjectIcon } from "@/src/lib/icons"
 
 interface DailyDetailsProps {
   selectedDate: Date | undefined
-  transactions: Transaction[]
-  onAddTransaction: (data: Omit<Transaction, "id">) => void
-  onDeleteTransaction: (id: string) => void
+  studySessions: StudySession[]
+  onAddStudySession: (data: Omit<StudySession, "id">) => void
+  onDeleteStudySession: (id: string) => void
 }
 
-export function DailyDetails({ selectedDate, transactions, onAddTransaction, onDeleteTransaction }: DailyDetailsProps) {
+export function DailyDetails({ selectedDate, studySessions, onAddStudySession, onDeleteStudySession }: DailyDetailsProps): React.JSX.Element {
   const [isModalOpen, setIsModalOpen] = useState(false)
 
-  const dailyTransactions = useMemo(() => {
-    return transactions.filter((t) => selectedDate && isSameDay(t.date, selectedDate))
-  }, [transactions, selectedDate])
+  const dailyStudySessions = useMemo(() => {
+    if (!selectedDate) return []
+    return studySessions.filter((s) => isSameDay(s.date, selectedDate))
+  }, [studySessions, selectedDate])
 
-  const dailyIncome = dailyTransactions.filter((t) => t.type === "income").reduce((sum, t) => sum + t.amount, 0)
-  const dailyExpense = dailyTransactions.filter((t) => t.type === "expense").reduce((sum, t) => sum + t.amount, 0)
-  const dailyBalance = dailyIncome - dailyExpense
+  const dailyTotalStudyTime = dailyStudySessions.reduce((sum, s) => sum + s.studyMinutes, 0)
 
-  const formatCurrency = (value: number) => {
-    return new Intl.NumberFormat("ja-JP", {
-      style: "currency",
-      currency: "JPY",
-    }).format(value)
-  }
-
-  if (!selectedDate) {
-    return (
-      <Card className="h-full">
-        <CardContent className="flex items-center justify-center h-full">
-          <p className="text-gray-500">日付を選択してください</p>
-        </CardContent>
-      </Card>
-    )
+  const formatTime = (minutes: number) => {
+    const hours = Math.floor(minutes / 60)
+    const mins = minutes % 60
+    if (hours > 0) {
+      return `${hours}時間${mins}分`
+    }
+    return `${mins}分`
   }
 
   return (
     <>
       <div className="bg-white p-4 rounded-lg shadow h-full flex flex-col">
-        <h3 className="font-bold mb-4">日時：{format(selectedDate, "yyyy-MM-dd")}</h3>
-        <div className="grid grid-cols-2 gap-2 mb-4">
-          <Card className="text-center">
-            <CardHeader className="p-2">
-              <CardTitle className="text-sm font-medium text-gray-500">収入</CardTitle>
-            </CardHeader>
-            <CardContent className="p-2">
-              <p className="text-lg font-bold text-blue-600">{formatCurrency(dailyIncome)}</p>
-            </CardContent>
-          </Card>
-          <Card className="text-center">
-            <CardHeader className="p-2">
-              <CardTitle className="text-sm font-medium text-gray-500">支出</CardTitle>
-            </CardHeader>
-            <CardContent className="p-2">
-              <p className="text-lg font-bold text-red-600">{formatCurrency(dailyExpense)}</p>
-            </CardContent>
-          </Card>
-        </div>
+        <h3 className="font-bold mb-4">日時：{selectedDate ? format(selectedDate, "yyyy-MM-dd") : ""}</h3>
         <Card className="text-center mb-4">
           <CardHeader className="p-2">
-            <CardTitle className="text-sm font-medium text-gray-500">残高</CardTitle>
+            <CardTitle className="text-sm font-medium text-gray-500">勉強時間合計</CardTitle>
           </CardHeader>
           <CardContent className="p-2">
-            <p className={cn("text-lg font-bold", dailyBalance >= 0 ? "text-green-600" : "text-red-600")}>
-              {formatCurrency(dailyBalance)}
-            </p>
+            <p className="text-lg font-bold text-blue-600">{formatTime(dailyTotalStudyTime)}</p>
           </CardContent>
         </Card>
         <div className="flex justify-between items-center mb-2 border-t pt-4">
@@ -86,52 +58,49 @@ export function DailyDetails({ selectedDate, transactions, onAddTransaction, onD
             onClick={() => setIsModalOpen(true)}
           >
             <PlusCircle className="h-4 w-4 mr-1" />
-            内訳を追加
+            記録を追加
           </Button>
         </div>
         <div className="flex-grow overflow-y-auto space-y-2">
-          {dailyTransactions.length > 0 ? (
-            dailyTransactions.map((t) => {
-              const Icon = getCategoryIcon(t.category)
+          {dailyStudySessions.length > 0 ? (
+            dailyStudySessions.map((s) => {
+              const Icon = getSubjectIcon(s.subject)
               return (
-                <div
-                  key={t.id}
-                  className={cn("flex items-center p-2 rounded-md", t.type === "expense" ? "bg-red-50" : "bg-blue-50")}
-                >
+                <div key={s.id} className="flex items-center p-2 rounded-md bg-blue-50">
                   <div className="mr-3">
                     <Icon className="h-5 w-5 text-gray-600" />
                   </div>
                   <div className="flex-grow">
-                    <span className="text-sm font-medium">{t.category}</span>
-                    {t.memo && <span className="text-sm text-gray-500 ml-2">{t.memo}</span>}
+                    <div className="flex items-center gap-2">
+                      <span className="text-sm font-medium">{s.subject}</span>
+                      <span className="text-xs text-gray-500">({s.nickname})</span>
+                    </div>
+                    {s.memo && <span className="text-sm text-gray-500">{s.memo}</span>}
                   </div>
-                  <span
-                    className={cn("font-semibold text-sm", t.type === "expense" ? "text-red-600" : "text-blue-600")}
-                  >
-                    {formatCurrency(t.amount)}
+                  <span className="font-semibold text-sm text-blue-600">
+                    {formatTime(s.studyMinutes)}
                   </span>
                   <Button
                     variant="ghost"
-                    size="icon"
-                    className="ml-2 text-gray-400 hover:text-red-600"
-                    onClick={() => onDeleteTransaction(t.id)}
-                    aria-label="削除"
+                    size="sm"
+                    className="text-red-500 hover:text-red-700 ml-2"
+                    onClick={() => onDeleteStudySession(s.id)}
                   >
-                    ×
+                    削除
                   </Button>
                 </div>
               )
             })
           ) : (
-            <p className="text-center text-sm text-gray-500 pt-8">この日の取引はありません。</p>
+            <p className="text-gray-500 text-center py-4">この日の記録はありません</p>
           )}
         </div>
       </div>
-      <TransactionModal
+      <StudySessionModal
         isOpen={isModalOpen}
         onOpenChange={setIsModalOpen}
         selectedDate={selectedDate}
-        onAddTransaction={onAddTransaction}
+        onAddStudySession={onAddStudySession}
       />
     </>
   )

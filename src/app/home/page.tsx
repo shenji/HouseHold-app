@@ -1,55 +1,44 @@
 "use client"
 import { useState } from "react"
-import { ArrowUp, ArrowDown, Banknote } from "lucide-react"
+import { Clock, BookOpen } from "lucide-react"
 
 import { SummaryCard } from "@/src/components/summary-card"
-import { HouseholdCalendar } from "@/src/components/household-calendar-v2"
+import { StudyCalendar } from "@/src/components/household-calendar-v2"
 import { DailyDetails } from "@/src/components/daily-details"
-import { useTransactions } from "@/src/contexts/transaction-context"
+import { useStudySessions } from "@/src/contexts/transaction-context"
+import type { StudySession } from "@/src/lib/types"
 
-export default function KakeiboHomePage() {
-  const { transactions, addTransaction, deleteTransaction, loading } = useTransactions()
+export default function StudyHomePage() {
+  const { studySessions, addStudySession, deleteStudySession, loading } = useStudySessions()
   const [currentMonth, setCurrentMonth] = useState(new Date())
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(new Date())
 
-  const handleAddTransaction = async (data: Omit<import("@/src/lib/types").Transaction, "id">) => {
+  const handleAddStudySession = async (data: Omit<StudySession, "id">) => {
     try {
-      await addTransaction(data)
+      await addStudySession(data)
     } catch (error) {
-      console.error("Failed to add transaction:", error)
+      console.error("Failed to add study session:", error)
       // ここでユーザーにエラーを通知する処理を追加できます
-      alert("取引の追加に失敗しました。")
+      alert("勉強時間の記録に失敗しました。")
     }
   }
 
-  const handleDeleteTransaction = async (id: string) => {
+  const handleDeleteStudySession = async (id: string) => {
     try {
-      await deleteTransaction(id)
+      await deleteStudySession(id)
     } catch (error) {
-      console.error("Failed to delete transaction:", error)
-      alert("取引の削除に失敗しました。")
+      console.error("Failed to delete study session:", error)
+      alert("勉強時間の削除に失敗しました。")
     }
   }
 
-  const monthlyIncome = transactions
+  const monthlyTotalStudyTime = studySessions
     .filter(
-      (t) =>
-        t.type === "income" &&
-        t.date.getFullYear() === currentMonth.getFullYear() &&
-        t.date.getMonth() === currentMonth.getMonth(),
+      (s) =>
+        s.date.getFullYear() === currentMonth.getFullYear() &&
+        s.date.getMonth() === currentMonth.getMonth(),
     )
-    .reduce((sum, t) => sum + t.amount, 0)
-
-  const monthlyExpense = transactions
-    .filter(
-      (t) =>
-        t.type === "expense" &&
-        t.date.getFullYear() === currentMonth.getFullYear() &&
-        t.date.getMonth() === currentMonth.getMonth(),
-    )
-    .reduce((sum, t) => sum + t.amount, 0)
-
-  const monthlyBalance = monthlyIncome - monthlyExpense
+    .reduce((sum, s) => sum + s.studyMinutes, 0)
 
   if (loading) {
     return (
@@ -62,13 +51,12 @@ export default function KakeiboHomePage() {
   return (
     <div className="flex flex-col md:flex-row gap-6 h-full">
       <div className="flex-grow">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-          <SummaryCard title="収入" amount={monthlyIncome} icon={ArrowUp} color="blue" />
-          <SummaryCard title="支出" amount={monthlyExpense} icon={ArrowDown} color="red" />
-          <SummaryCard title="残高" amount={monthlyBalance} icon={Banknote} color="green" />
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+          <SummaryCard title="今月の勉強時間" amount={monthlyTotalStudyTime} icon={Clock} color="blue" />
+          <SummaryCard title="平均勉強時間/日" amount={Math.round(monthlyTotalStudyTime / new Date(currentMonth.getFullYear(), currentMonth.getMonth() + 1, 0).getDate())} icon={BookOpen} color="green" />
         </div>
-        <HouseholdCalendar
-          transactions={transactions}
+        <StudyCalendar
+          studySessions={studySessions}
           currentMonth={currentMonth}
           setCurrentMonth={setCurrentMonth}
           selectedDate={selectedDate}
@@ -76,7 +64,7 @@ export default function KakeiboHomePage() {
         />
       </div>
       <div className="w-full md:max-w-sm flex-shrink-0">
-        <DailyDetails selectedDate={selectedDate} transactions={transactions} onAddTransaction={handleAddTransaction} onDeleteTransaction={handleDeleteTransaction} />
+        <DailyDetails selectedDate={selectedDate} studySessions={studySessions} onAddStudySession={handleAddStudySession} onDeleteStudySession={handleDeleteStudySession} />
       </div>
     </div>
   )

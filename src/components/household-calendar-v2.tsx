@@ -1,5 +1,6 @@
 "use client"
 
+import type React from "react"
 import { useMemo } from "react"
 import {
   format,
@@ -18,23 +19,23 @@ import { ChevronLeft, ChevronRight } from "lucide-react"
 
 import { cn } from "@/src/lib/utils"
 import { Button } from "@/src/components/ui/button"
-import type { Transaction } from "@/src/lib/types"
+import type { StudySession } from "@/src/lib/types"
 
-interface HouseholdCalendarProps {
-  transactions: Transaction[]
+interface StudyCalendarProps {
+  studySessions: StudySession[]
   currentMonth: Date
   setCurrentMonth: (date: Date) => void
   selectedDate: Date | undefined
   setSelectedDate: (date: Date | undefined) => void
 }
 
-export function HouseholdCalendar({
-  transactions,
+export function StudyCalendar({
+  studySessions,
   currentMonth,
   setCurrentMonth,
   selectedDate,
   setSelectedDate,
-}: HouseholdCalendarProps) {
+}: StudyCalendarProps): React.JSX.Element {
   const firstDayOfMonth = startOfMonth(currentMonth)
   const lastDayOfMonth = endOfMonth(currentMonth)
 
@@ -44,23 +45,25 @@ export function HouseholdCalendar({
   })
 
   const dailyData = useMemo(() => {
-    const data = new Map<string, { income: number; expense: number }>()
-    transactions.forEach((t) => {
-      const day = format(t.date, "yyyy-MM-dd")
-      const current = data.get(day) || { income: 0, expense: 0 }
-      if (t.type === "income") {
-        current.income += t.amount
-      } else {
-        current.expense += t.amount
-      }
+    const data = new Map<string, { totalStudyTime: number; sessions: StudySession[] }>()
+    studySessions.forEach((s) => {
+      const day = format(s.date, "yyyy-MM-dd")
+      const current = data.get(day) || { totalStudyTime: 0, sessions: [] }
+      current.totalStudyTime += s.studyMinutes
+      current.sessions.push(s)
       data.set(day, current)
     })
     return data
-  }, [transactions])
+  }, [studySessions])
 
-  const formatCurrency = (value: number) => {
-    if (value === 0) return "0"
-    return new Intl.NumberFormat("ja-JP").format(value)
+  const formatTime = (minutes: number) => {
+    if (minutes === 0) return "0分"
+    const hours = Math.floor(minutes / 60)
+    const mins = minutes % 60
+    if (hours > 0) {
+      return `${hours}h${mins}m`
+    }
+    return `${mins}m`
   }
 
   return (
@@ -100,16 +103,15 @@ export function HouseholdCalendar({
         {daysInMonth.map((day) => {
           const dayKey = format(day, "yyyy-MM-dd")
           const data = dailyData.get(dayKey)
-          const hasTransactions = !!data
-          const income = data?.income || 0
-          const expense = data?.expense || 0
-          const balance = income - expense
+          const hasStudySessions = !!data
+          const totalStudyTime = data?.totalStudyTime || 0
+          const sessions = data?.sessions || []
 
           return (
             <div
               key={day.toString()}
               className={cn(
-                "h-28 border-r border-b p-2 text-left flex flex-col",
+                "h-32 border-r border-b p-2 text-left flex flex-col",
                 !isSameMonth(day, currentMonth) && "text-gray-400 bg-gray-50",
                 isSameDay(day, new Date()) && "bg-blue-50",
                 isSameDay(day, selectedDate || new Date(0)) && "bg-green-100",
@@ -118,13 +120,17 @@ export function HouseholdCalendar({
               onClick={() => setSelectedDate(day)}
             >
               <span className="font-medium">{format(day, "d")}</span>
-              {hasTransactions && (
-                <div className="text-xs mt-auto space-y-0.5 text-right">
-                  <p className="text-blue-600">{formatCurrency(income)}</p>
-                  <p className="text-red-600">{formatCurrency(expense)}</p>
-                  <p className={cn("font-bold", balance >= 0 ? "text-green-600" : "text-red-600")}>
-                    {formatCurrency(balance)}
-                  </p>
+              {hasStudySessions && (
+                <div className="text-xs mt-auto space-y-0.5">
+                  <p className="text-blue-600 font-bold">{formatTime(totalStudyTime)}</p>
+                  {sessions.slice(0, 2).map((session, index) => (
+                    <p key={index} className="text-gray-600 truncate">
+                      {session.nickname}: {formatTime(session.studyMinutes)}
+                    </p>
+                  ))}
+                  {sessions.length > 2 && (
+                    <p className="text-gray-500">+{sessions.length - 2}件</p>
+                  )}
                 </div>
               )}
             </div>

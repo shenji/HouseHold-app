@@ -4,13 +4,13 @@ import { Inter } from "next/font/google"
 import "./globals.css"
 import { cn } from "@/src/lib/utils"
 import { PageWrapper } from "@/src/components/page-wrapper"
-import { TransactionProvider } from "@/src/contexts/transaction-context"
+import { StudyProvider } from "@/src/contexts/transaction-context"
 
 const inter = Inter({ subsets: ["latin"] })
 
 export const metadata: Metadata = {
-  title: "家計簿",
-  description: "A household finance app built with Next.js and TypeScript.",
+  title: "勉強時間管理",
+  description: "A study time management app built with Next.js and TypeScript.",
 }
 
 export default function RootLayout({
@@ -21,9 +21,9 @@ export default function RootLayout({
   return (
     <html lang="ja">
       <body className={cn("bg-white text-black", inter.className)}>
-        <TransactionProvider>
+        <StudyProvider>
           <PageWrapper>{children}</PageWrapper>
-        </TransactionProvider>
+        </StudyProvider>
       </body>
     </html>
   )

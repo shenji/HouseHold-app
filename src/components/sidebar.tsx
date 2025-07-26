@@ -13,8 +13,8 @@ export function Sidebar({ className }: SidebarProps) {
   const pathname = usePathname()
 
   const navItems = [
-    { href: "/home", icon: Home, label: "Home" },
-    { href: "/report", icon: BarChart2, label: "Report" },
+    { href: "/home", icon: Home, label: "ホーム" },
+    { href: "/report", icon: BarChart2, label: "レポート" },
   ]
 
   return (
